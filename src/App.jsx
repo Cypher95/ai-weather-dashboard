@@ -1,5 +1,17 @@
-import { useEffect, useState } from "react";
-import { Search, MapPin, Wind, Droplets, Eye, Gauge } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Search,
+  MapPin,
+  Wind,
+  Droplets,
+  Eye,
+  Gauge,
+  Sun,
+  MoonStar,
+  CloudRain,
+  CloudSun,
+  Compass,
+} from "lucide-react";
 
 const API_URL = "https://api.open-meteo.com/v1/forecast";
 const GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search";
@@ -15,39 +27,68 @@ const weatherLabels = {
   51: ["Light drizzle", "🌦️"],
   53: ["Drizzle", "🌦️"],
   55: ["Heavy drizzle", "🌧️"],
+  56: ["Freezing drizzle", "🌧️"],
+  57: ["Heavy freezing drizzle", "🌧️"],
   61: ["Light rain", "🌦️"],
   63: ["Rain", "🌧️"],
   65: ["Heavy rain", "🌧️"],
+  66: ["Freezing rain", "🌧️"],
+  67: ["Heavy freezing rain", "🌧️"],
   71: ["Light snow", "🌨️"],
   73: ["Snow", "❄️"],
   75: ["Heavy snow", "❄️"],
+  77: ["Snow grains", "❄️"],
   80: ["Rain showers", "🌦️"],
   81: ["Rain showers", "🌧️"],
   82: ["Heavy showers", "⛈️"],
+  85: ["Light snow showers", "🌨️"],
+  86: ["Heavy snow showers", "❄️"],
   95: ["Thunderstorm", "⛈️"],
-  96: ["Thunderstorm", "⛈️"],
-  99: ["Thunderstorm", "⛈️"],
+  96: ["Thunderstorm + hail", "⛈️"],
+  99: ["Heavy thunderstorm", "⛈️"],
 };
 
 const getWeather = (code) => weatherLabels[code] ?? ["Unknown", "🌤️"];
 const formatCity = (result) =>
   [result.name, result.country].filter(Boolean).join(", ");
 const formatTime = (time) =>
-  new Date(time).toLocaleTimeString([], { hour: "numeric" });
+  new Date(time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 const formatDay = (time, index) =>
-  index === 0
-    ? "Today"
-    : new Date(time).toLocaleDateString([], { weekday: "short" });
+  index === 0 ? "Today" : new Date(time).toLocaleDateString([], { weekday: "short" });
+const formatDate = (time) =>
+  new Date(time).toLocaleDateString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+
+const weatherThemes = {
+  clear: { className: "theme-clear", accent: "#fbbf24" },
+  cloud: { className: "theme-cloud", accent: "#60a5fa" },
+  rain: { className: "theme-rain", accent: "#38bdf8" },
+  snow: { className: "theme-snow", accent: "#a5f3fc" },
+  storm: { className: "theme-storm", accent: "#7c3aed" },
+  default: { className: "theme-default", accent: "#2563eb" },
+};
+
+const getWeatherTheme = (code) => {
+  if ([0, 1].includes(code)) return weatherThemes.clear;
+  if ([2, 3, 45, 48].includes(code)) return weatherThemes.cloud;
+  if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return weatherThemes.rain;
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return weatherThemes.snow;
+  if ([95, 96, 99].includes(code)) return weatherThemes.storm;
+  return weatherThemes.default;
+};
 
 async function fetchWeather(latitude, longitude, signal) {
   const params = new URLSearchParams({
     latitude,
     longitude,
     current:
-      "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure,visibility",
+      "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure,visibility,is_day",
     hourly: "temperature_2m,weather_code",
     daily:
-      "weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_probability_max",
+      "weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_probability_max,sunrise,sunset,uv_index_max",
     forecast_days: "7",
     timezone: "auto",
   });
@@ -102,14 +143,13 @@ function App() {
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
+
     return () => controller.abort();
   }, [city]);
 
   useEffect(() => {
     const trimmedQuery = query.trim();
-    if (trimmedQuery.length < 2) {
-      return undefined;
-    }
+    if (trimmedQuery.length < 2) return undefined;
 
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
@@ -163,15 +203,14 @@ function App() {
       setError("Location is not supported by this browser.");
       return;
     }
+
     setLoading(true);
     setError("");
+
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         try {
-          const result = await fetchLocationName(
-            coords.latitude,
-            coords.longitude,
-          );
+          const result = await fetchLocationName(coords.latitude, coords.longitude);
           setCity({
             name: result?.name || "My Location",
             latitude: coords.latitude,
@@ -191,19 +230,24 @@ function App() {
 
   const current = weather?.current;
   const currentWeather = current ? getWeather(current.weather_code) : ["", "🌤️"];
-  const hourly = weather
-    ? weather.hourly.time
-        .map((time, index) => ({
-          time,
-          temperature: weather.hourly.temperature_2m[index],
-          code: weather.hourly.weather_code[index],
-        }))
-        .filter((item) => new Date(item.time) >= new Date())
-        .slice(0, 6)
-    : [];
+  const theme = current ? getWeatherTheme(current.weather_code) : weatherThemes.default;
+
+  const hourly = useMemo(() => {
+    if (!weather) return [];
+    return weather.hourly.time
+      .map((time, index) => ({
+        time,
+        temperature: weather.hourly.temperature_2m[index],
+        code: weather.hourly.weather_code[index],
+      }))
+      .filter((item) => new Date(item.time) >= new Date())
+      .slice(0, 6);
+  }, [weather]);
+
   const activeDayIndex = weather
     ? Math.min(selectedDayIndex, weather.daily.time.length - 1)
     : 0;
+
   const selectedDay = weather
     ? {
         time: weather.daily.time[activeDayIndex],
@@ -212,15 +256,26 @@ function App() {
         low: weather.daily.temperature_2m_min[activeDayIndex],
         wind: weather.daily.wind_speed_10m_max[activeDayIndex],
         rainChance: weather.daily.precipitation_probability_max[activeDayIndex],
+        sunrise: weather.daily.sunrise[activeDayIndex],
+        sunset: weather.daily.sunset[activeDayIndex],
+        uvIndex: weather.daily.uv_index_max[activeDayIndex],
       }
     : null;
 
+  const insightText = loading
+    ? "Loading weather insight..."
+    : `${currentWeather[0]} in ${city.name}. The air feels ${Math.round(current.apparent_temperature)}° with ${current.relative_humidity_2m}% humidity and a breeze of ${Math.round(current.wind_speed_10m)} km/h.`;
+
   return (
-    <div className="app">
+    <div className={`app ${theme.className}`}>
       <header className="header">
-        <div className="logo"><span>☁️</span><h1>SkySense</h1></div>
+        <div className="logo">
+          <span>☁️</span>
+          <h1>SkySense</h1>
+        </div>
+
         <form className="search-box" onSubmit={searchCity}>
-          <Search size={20} />
+          <Search size={18} />
           <div className="search-input-wrapper">
             <input
               type="text"
@@ -241,37 +296,59 @@ function App() {
                 {!searching && suggestions.length === 0 && (
                   <p className="no-suggestions">No cities found</p>
                 )}
-                {!searching && suggestions.map((suggestion) => (
-                  <button
-                    type="button"
-                    className="suggestion"
-                    key={`${suggestion.id}-${suggestion.latitude}`}
-                    onMouseDown={() => selectCity(suggestion)}
-                  >
-                    <MapPin size={16} />
-                    <span>{formatCity(suggestion)}</span>
-                  </button>
-                ))}
+                {!searching &&
+                  suggestions.map((suggestion) => (
+                    <button
+                      type="button"
+                      className="suggestion"
+                      key={`${suggestion.id}-${suggestion.latitude}`}
+                      onMouseDown={() => selectCity(suggestion)}
+                    >
+                      <MapPin size={16} />
+                      <span>{formatCity(suggestion)}</span>
+                    </button>
+                  ))}
               </div>
             )}
           </div>
           <button type="submit">Search</button>
         </form>
-        <button className="location-btn" onClick={useLocation}>
+
+        <button className="location-btn" onClick={useLocation} type="button">
           <MapPin size={18} /> My Location
         </button>
       </header>
 
       <main className="container">
         {error && <p className="error-message">{error}</p>}
+
         <section className="hero">
-          <div>
-            <p className="location"><MapPin size={18} />{city.name}</p>
-            {loading ? <h2>--°</h2> : <h2>{Math.round(current.temperature_2m)}°</h2>}
+          <div className="hero-copy">
+            <p className="location">
+              <MapPin size={17} />
+              {city.name}
+            </p>
+            <p className="date-label">{loading ? "Fetching live conditions" : formatDate(current.time)}</p>
+            {loading ? (
+              <h2>--°</h2>
+            ) : (
+              <h2>{Math.round(current.temperature_2m)}°</h2>
+            )}
             <p className="condition">{loading ? "Loading..." : currentWeather[0]}</p>
-            {!loading && <p className="feels">Feels like {Math.round(current.apparent_temperature)}°</p>}
+            {!loading && (
+              <p className="feels">
+                Feels like {Math.round(current.apparent_temperature)}°
+              </p>
+            )}
           </div>
-          <div className="weather-icon">{currentWeather[1]}</div>
+
+          <div className="hero-visual">
+            <div className="weather-icon">{currentWeather[1]}</div>
+            <div className="mood-pill">
+              {current && current.is_day ? <Sun size={16} /> : <MoonStar size={16} />}
+              <span>{current && current.is_day ? "Daytime" : "Nighttime"}</span>
+            </div>
+          </div>
         </section>
 
         <section className="stats">
@@ -282,67 +359,142 @@ function App() {
             [Gauge, "Pressure", current && `${Math.round(current.surface_pressure)} hPa`],
           ].map(([Icon, label, value]) => (
             <div className="stat-card" key={label}>
-              <Icon /><div><span>{label}</span><strong>{loading ? "--" : value}</strong></div>
+              <div className="icon-wrap">
+                <Icon size={18} />
+              </div>
+              <div>
+                <span>{label}</span>
+                <strong>{loading ? "--" : value}</strong>
+              </div>
             </div>
           ))}
         </section>
 
         <section className="section">
-          <div className="section-title"><h3>Hourly Forecast</h3><span>Today</span></div>
+          <div className="section-title">
+            <h3>Hourly forecast</h3>
+            <span>Next 6 hours</span>
+          </div>
           <div className="hourly">
             {hourly.map((item, index) => {
               const [label, icon] = getWeather(item.code);
-              return <div className={`hour ${index === 0 ? "active" : ""}`} key={item.time}>
-                <span>{index === 0 ? "Now" : formatTime(item.time)}</span><b title={label}>{icon}</b>
-                <strong>{Math.round(item.temperature)}°</strong>
-              </div>;
+              return (
+                <div className={`hour ${index === 0 ? "active" : ""}`} key={item.time}>
+                  <span>{index === 0 ? "Now" : formatTime(item.time)}</span>
+                  <b title={label}>{icon}</b>
+                  <strong>{Math.round(item.temperature)}°</strong>
+                </div>
+              );
             })}
           </div>
         </section>
 
-        <section className="section">
-          <div className="section-title"><h3>7-Day Forecast</h3></div>
-          <div className="forecast">
-            {weather?.daily.time.map((time, index) => {
-              const [label, icon] = getWeather(weather.daily.weather_code[index]);
-              const isSelected = index === activeDayIndex;
-              return <button
-                className={`day ${isSelected ? "selected" : ""}`}
-                key={time}
-                type="button"
-                onClick={() => setSelectedDayIndex(index)}
-                aria-pressed={isSelected}
-              >
-                <span>{formatDay(time, index)}</span><b title={label}>{icon}</b>
-                <strong>{Math.round(weather.daily.temperature_2m_max[index])}° / {Math.round(weather.daily.temperature_2m_min[index])}°</strong>
-                <small><Wind size={13} /> {Math.round(weather.daily.wind_speed_10m_max[index])} km/h</small>
-                <small>{label}</small>
-              </button>;
-            })}
-          </div>
-          {selectedDay && (
-            <div className="forecast-detail">
-              <div className="forecast-detail-heading">
-                <div>
-                  <span>{formatDay(selectedDay.time, activeDayIndex)}'s weather</span>
-                  <h4>{getWeather(selectedDay.code)[0]}</h4>
-                </div>
-                <span className="forecast-detail-icon">{getWeather(selectedDay.code)[1]}</span>
-              </div>
-              <div className="forecast-detail-stats">
-                <span><strong>{Math.round(selectedDay.high)}° / {Math.round(selectedDay.low)}°</strong>High / low</span>
-                <span><strong>{Math.round(selectedDay.wind)} km/h</strong>Max wind</span>
-                <span><strong>{selectedDay.rainChance}%</strong>Rain chance</span>
-              </div>
+        <section className="section details-layout">
+          <div className="day-panel">
+            <div className="section-title align-start">
+              <h3>7-day forecast</h3>
             </div>
-          )}
+            <div className="forecast">
+              {weather?.daily.time.map((time, index) => {
+                const [label, icon] = getWeather(weather.daily.weather_code[index]);
+                const isSelected = index === activeDayIndex;
+                return (
+                  <button
+                    className={`day ${isSelected ? "selected" : ""}`}
+                    key={time}
+                    type="button"
+                    onClick={() => setSelectedDayIndex(index)}
+                    aria-pressed={isSelected}
+                  >
+                    <span>{formatDay(time, index)}</span>
+                    <b title={label}>{icon}</b>
+                    <strong>
+                      {Math.round(weather.daily.temperature_2m_max[index])}° / {Math.round(weather.daily.temperature_2m_min[index])}°
+                    </strong>
+                    <small>
+                      <Wind size={13} /> {Math.round(weather.daily.wind_speed_10m_max[index])} km/h
+                    </small>
+                    <small>{label}</small>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="detail-panel">
+            {selectedDay && (
+              <>
+                <div className="detail-header">
+                  <div>
+                    <span>{formatDay(selectedDay.time, activeDayIndex)} overview</span>
+                    <h4>{getWeather(selectedDay.code)[0]}</h4>
+                  </div>
+                  <div className="detail-icon">{getWeather(selectedDay.code)[1]}</div>
+                </div>
+
+                <div className="mini-grid">
+                  <div className="mini-card">
+                    <CloudSun size={18} />
+                    <div>
+                      <span>Sunrise</span>
+                      <strong>{formatTime(selectedDay.sunrise)}</strong>
+                    </div>
+                  </div>
+                  <div className="mini-card">
+                    <MoonStar size={18} />
+                    <div>
+                      <span>Sunset</span>
+                      <strong>{formatTime(selectedDay.sunset)}</strong>
+                    </div>
+                  </div>
+                  <div className="mini-card">
+                    <Compass size={18} />
+                    <div>
+                      <span>UV Index</span>
+                      <strong>{selectedDay.uvIndex.toFixed(1)}</strong>
+                    </div>
+                  </div>
+                  <div className="mini-card">
+                    <CloudRain size={18} />
+                    <div>
+                      <span>Rain chance</span>
+                      <strong>{selectedDay.rainChance}%</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="detail-stats">
+                  <div>
+                    <span>High / low</span>
+                    <strong>
+                      {Math.round(selectedDay.high)}° / {Math.round(selectedDay.low)}°
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Max wind</span>
+                    <strong>{Math.round(selectedDay.wind)} km/h</strong>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </section>
 
         <section className="ai-card">
-          <div className="ai-title"><span>🤖</span><div><h3>AI Weather Insight</h3><p>Powered by AI</p></div></div>
-          <p>{loading ? "Loading weather insight..." : `${currentWeather[0]} in ${city.name}. The current temperature is ${Math.round(current.temperature_2m)}° with ${current.relative_humidity_2m}% humidity.`}</p>
-          <div className="recommendations"><span>🌡️ Live weather</span><span>📍 Open-Meteo data</span></div>
-       </section>
+          <div className="ai-title">
+            <span>🤖</span>
+            <div>
+              <h3>AI weather insight</h3>
+              <p>Powered by live weather data</p>
+            </div>
+          </div>
+          <p>{insightText}</p>
+          <div className="recommendations">
+            <span>🌡️ Live conditions</span>
+            <span>📍 Local forecast</span>
+            <span>💨 Wind tracking</span>
+          </div>
+        </section>
       </main>
     </div>
   );
