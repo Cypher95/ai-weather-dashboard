@@ -51,27 +51,27 @@ button {
 }
 
 .app.theme-clear {
-  background: linear-gradient(180deg, #f7f9fc 0%, #eef4fb 100%);
+  background: linear-gradient(180deg, #fffaf0 0%, #fff1d6 100%);
 }
 
 .app.theme-cloud {
-  background: linear-gradient(180deg, #f4f8ff 0%, #edf3fb 100%);
+  background: linear-gradient(180deg, #f6f9ff 0%, #edf4ff 100%);
 }
 
 .app.theme-rain {
-  background: linear-gradient(180deg, #f2f7ff 0%, #ebf3fb 100%);
+  background: linear-gradient(180deg, #f1f9ff 0%, #e8f3ff 100%);
 }
 
 .app.theme-snow {
-  background: linear-gradient(180deg, #f6fbff 0%, #edf7ff 100%);
+  background: linear-gradient(180deg, #f1fcff 0%, #edf9ff 100%);
 }
 
 .app.theme-storm {
-  background: linear-gradient(180deg, #f7f4ff 0%, #f1ecff 100%);
+  background: linear-gradient(180deg, #f7f1ff 0%, #efe8ff 100%);
 }
 
 .app.theme-default {
-  background: linear-gradient(180deg, #f6f9ff 0%, #edf4fb 100%);
+  background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
 }
 
 .header {
@@ -114,8 +114,8 @@ button {
   gap: 10px;
   width: min(420px, 44vw);
   padding: 10px 12px 10px 14px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(96, 165, 250, 0.26);
   border-radius: 18px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
   backdrop-filter: blur(8px);
@@ -123,29 +123,29 @@ button {
 }
 
 .search-box:focus-within {
-  border-color: rgba(100, 116, 139, 0.5);
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
+  border-color: rgba(96, 165, 250, 0.55);
+  box-shadow: 0 12px 20px rgba(96, 165, 250, 0.08);
   transform: translateY(-1px);
 }
 
 .search-box svg {
-  color: #4b5563;
+  color: #475569;
 }
 
 .search-box button {
-  background: rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(191,219,254,0.4));
   color: #0f172a;
-  border: 1px solid rgba(148, 163, 184, 0.24);
+  border: 1px solid rgba(96, 165, 250, 0.22);
   border-radius: 12px;
   padding: 10px 16px;
   font-weight: 700;
   box-shadow: none;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search-box button:hover {
-  background: rgba(255, 255, 255, 0.7);
   transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(96, 165, 250, 0.08);
 }
 
 .search-input-wrapper {
@@ -171,11 +171,11 @@ button {
   top: calc(100% + 12px);
   left: -14px;
   right: -10px;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.98);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 16px;
-  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.06);
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
   z-index: 20;
 }
 
@@ -186,17 +186,19 @@ button {
   gap: 10px;
   background: transparent;
   color: #0f172a;
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
   text-align: left;
   border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
 .suggestion:hover,
 .suggestion:focus-visible {
-  background: rgba(148, 163, 184, 0.04);
-  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(191, 219, 254, 0.18);
+  border-color: rgba(96, 165, 250, 0.12);
   outline: none;
+  transform: translateX(2px);
 }
 
 .suggestion svg {
@@ -251,10 +253,10 @@ button {
   min-height: 270px;
   padding: 28px 30px;
   border-radius: 30px;
-  background: rgba(255, 255, 255, 0.75);
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.18), rgba(168, 85, 247, 0.08), rgba(253, 224, 71, 0.12));
   color: #0f172a;
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(147, 197, 253, 0.28);
+  box-shadow: 0 18px 30px rgba(96, 165, 250, 0.08);
 }
 
 .hero-copy {
@@ -340,8 +342,8 @@ button {
   gap: 14px;
   padding: 18px 20px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(239,246,255,0.78));
+  border: 1px solid rgba(147, 197, 253, 0.26);
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.02);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
@@ -459,8 +461,8 @@ button {
 
 .day-panel,
 .detail-panel {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(239,246,255,0.75));
+  border: 1px solid rgba(147, 197, 253, 0.22);
   border-radius: 24px;
   padding: 22px;
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.03);
@@ -608,9 +610,9 @@ button {
 
 .ai-card {
   margin-top: 28px;
-  background: rgba(255, 255, 255, 0.76);
+  background: linear-gradient(135deg, rgba(255,255,255,0.82), rgba(224,242,254,0.8));
   color: #0f172a;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  border: 1px solid rgba(147, 197, 253, 0.22);
   border-radius: 24px;
   padding: 24px 26px;
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.04);
