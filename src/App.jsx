@@ -86,7 +86,8 @@ async function fetchWeather(latitude, longitude, signal) {
     longitude,
     current:
       "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure,visibility,is_day",
-    hourly: "temperature_2m,weather_code",
+    hourly:
+      "temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,precipitation_probability,wind_speed_10m",
     daily:
       "weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_probability_max,sunrise,sunset,uv_index_max",
     forecast_days: "7",
@@ -132,6 +133,7 @@ function App() {
   const [error, setError] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [selectedHourIndex, setSelectedHourIndex] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -238,7 +240,11 @@ function App() {
       .map((time, index) => ({
         time,
         temperature: weather.hourly.temperature_2m[index],
+        apparentTemperature: weather.hourly.apparent_temperature[index],
+        humidity: weather.hourly.relative_humidity_2m[index],
         code: weather.hourly.weather_code[index],
+        rainChance: weather.hourly.precipitation_probability[index],
+        wind: weather.hourly.wind_speed_10m[index],
       }))
       .filter((item) => new Date(item.time) >= new Date())
       .slice(0, 6);
@@ -247,6 +253,10 @@ function App() {
   const activeDayIndex = weather
     ? Math.min(selectedDayIndex, weather.daily.time.length - 1)
     : 0;
+  const activeHourIndex = hourly.length
+    ? Math.min(selectedHourIndex, hourly.length - 1)
+    : 0;
+  const selectedHour = hourly[activeHourIndex];
 
   const selectedDay = weather
     ? {
@@ -379,14 +389,43 @@ function App() {
             {hourly.map((item, index) => {
               const [label, icon] = getWeather(item.code);
               return (
-                <div className={`hour ${index === 0 ? "active" : ""}`} key={item.time}>
+                <button
+                  className={`hour ${index === activeHourIndex ? "active" : ""}`}
+                  key={item.time}
+                  type="button"
+                  onClick={() => setSelectedHourIndex(index)}
+                  aria-pressed={index === activeHourIndex}
+                >
                   <span>{index === 0 ? "Now" : formatTime(item.time)}</span>
                   <b title={label}>{icon}</b>
                   <strong>{Math.round(item.temperature)}°</strong>
-                </div>
+                  <small>{label}</small>
+                </button>
               );
             })}
           </div>
+          {selectedHour && (
+            <div className="hour-detail">
+              <div className="hour-detail-main">
+                <div className="hour-detail-icon">{getWeather(selectedHour.code)[1]}</div>
+                <div>
+                  <span>{activeHourIndex === 0 ? "Current conditions" : formatTime(selectedHour.time)}</span>
+                  <h4>{getWeather(selectedHour.code)[0]}</h4>
+                  <p>{formatDate(selectedHour.time)} · Forecast for {city.name}</p>
+                </div>
+              </div>
+              <div className="hour-detail-value">
+                <strong>{Math.round(selectedHour.temperature)}°</strong>
+                <span>Temperature</span>
+              </div>
+              <div className="hour-detail-stats">
+                <span><strong>{Math.round(selectedHour.apparentTemperature)}°</strong>Feels like</span>
+                <span><strong>{selectedHour.humidity}%</strong>Humidity</span>
+                <span><strong>{selectedHour.rainChance}%</strong>Rain chance</span>
+                <span><strong>{Math.round(selectedHour.wind)} km/h</strong>Wind</span>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="section details-layout">

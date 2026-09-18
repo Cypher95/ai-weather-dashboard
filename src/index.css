@@ -420,6 +420,8 @@ button {
   min-height: 135px;
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.02);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: #0f172a;
+  text-align: center;
 }
 
 .hour:hover {
@@ -451,6 +453,96 @@ button {
 .hour.active span,
 .hour.active strong {
   color: #0f172a;
+}
+
+.hour small {
+  min-height: 18px;
+  color: #64748b;
+  font-size: 0.68rem;
+}
+
+.hour-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 14px;
+  padding: 18px 20px;
+  border: 1px solid rgba(147, 197, 253, 0.24);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.56);
+  animation: detail-in 0.2s ease-out;
+}
+
+.hour-detail-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hour-detail-icon {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  background: rgba(191, 219, 254, 0.22);
+  font-size: 1.8rem;
+}
+
+.hour-detail-main span,
+.hour-detail-main p,
+.hour-detail-value span {
+  color: #64748b;
+  font-size: 0.76rem;
+}
+
+.hour-detail-main h4 {
+  margin: 3px 0;
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.hour-detail-value {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.hour-detail-value strong {
+  color: #0f172a;
+  font-size: 1.8rem;
+}
+
+.hour-detail-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-left: auto;
+}
+
+.hour-detail-stats span {
+  display: grid;
+  gap: 2px;
+  color: #64748b;
+  font-size: 0.7rem;
+}
+
+.hour-detail-stats strong {
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+@keyframes detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .details-layout {
@@ -749,6 +841,19 @@ button {
 
   .hour {
     min-width: 120px;
+  }
+
+  .hour-detail {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hour-detail-value {
+    justify-items: start;
+  }
+
+  .hour-detail-stats {
+    margin-left: 0;
   }
 
   .forecast {
