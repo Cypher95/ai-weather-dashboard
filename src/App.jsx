@@ -49,8 +49,23 @@ const weatherLabels = {
 };
 
 const getWeather = (code) => weatherLabels[code] ?? ["Unknown", "🌤️"];
+const getLocationDetails = (result) => ({
+  city: result.city || result.name || "",
+  state: result.state || result.admin1 || "",
+  area: result.area || result.suburb || result.neighbourhood || result.admin2 || result.admin3 || "",
+  country: result.country || "",
+});
 const formatCity = (result) =>
-  [result.name, result.country].filter(Boolean).join(", ");
+  [result.name || result.city, result.admin1 || result.state, result.country]
+    .filter(Boolean)
+    .join(", ");
+const formatLocationParts = (location) =>
+  [
+    ["City", location.city],
+    ["State", location.state],
+    ["Area", location.area],
+    ["Country", location.country],
+  ].filter(([, value]) => value);
 const formatTime = (time) =>
   new Date(time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 const formatDay = (time, index) =>
@@ -110,19 +125,23 @@ async function fetchLocationName(latitude, longitude) {
   const data = await response.json();
   const address = data.address ?? {};
   return {
-    name: [
-      address.city || address.town || address.village || address.municipality,
-      address.country,
-    ]
-      .filter(Boolean)
-      .join(", "),
+    ...getLocationDetails({
+      city: address.city || address.town || address.village || address.municipality,
+      state: address.state,
+      area: address.suburb || address.neighbourhood || address.district || address.county,
+      country: address.country,
+    }),
   };
 }
 
 function App() {
   const [query, setQuery] = useState("");
   const [city, setCity] = useState({
-    name: "Mumbai, India",
+    name: "Mumbai, Maharashtra, India",
+    city: "Mumbai",
+    state: "Maharashtra",
+    area: "Mumbai",
+    country: "India",
     latitude: 19.076,
     longitude: 72.8777,
   });
@@ -183,9 +202,11 @@ function App() {
   }, [query]);
 
   const selectCity = (result) => {
+    const location = getLocationDetails(result);
     setLoading(true);
     setError("");
     setCity({
+      ...location,
       name: formatCity(result),
       latitude: result.latitude,
       longitude: result.longitude,
@@ -214,7 +235,12 @@ function App() {
         try {
           const result = await fetchLocationName(coords.latitude, coords.longitude);
           setCity({
-            name: result?.name || "My Location",
+            ...result,
+            name: formatCity({
+              name: result?.city || "My Location",
+              admin1: result?.state,
+              country: result?.country,
+            }),
             latitude: coords.latitude,
             longitude: coords.longitude,
           });
@@ -315,7 +341,14 @@ function App() {
                       onMouseDown={() => selectCity(suggestion)}
                     >
                       <MapPin size={16} />
-                      <span>{formatCity(suggestion)}</span>
+                      <span className="suggestion-copy">
+                        <strong>{suggestion.name}</strong>
+                        <small>
+                          {formatLocationParts(getLocationDetails(suggestion))
+                            .map(([label, value]) => `${label}: ${value}`)
+                            .join(" · ")}
+                        </small>
+                      </span>
                     </button>
                   ))}
               </div>
@@ -338,6 +371,14 @@ function App() {
               <MapPin size={17} />
               {city.name}
             </p>
+            <div className="location-details" aria-label="Selected location details">
+              {formatLocationParts(city).map(([label, value]) => (
+                <span key={label}>
+                  <b>{label}</b>
+                  {value}
+                </span>
+              ))}
+            </div>
             <p className="date-label">{loading ? "Fetching live conditions" : formatDate(current.time)}</p>
             {loading ? (
               <h2>--°</h2>

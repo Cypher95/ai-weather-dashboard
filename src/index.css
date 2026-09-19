@@ -203,6 +203,28 @@ button {
 
 .suggestion svg {
   color: #2563eb;
+  flex: 0 0 auto;
+}
+
+.suggestion-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.suggestion-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.suggestion-copy small {
+  overflow: hidden;
+  color: #64748b;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.72rem;
 }
 
 .no-suggestions {
@@ -269,6 +291,29 @@ button {
   gap: 8px;
   font-size: 1rem;
   color: #334155;
+}
+
+.location-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.location-details span {
+  display: inline-flex;
+  gap: 4px;
+  padding: 6px 9px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.35);
+  color: #475569;
+  font-size: 0.75rem;
+}
+
+.location-details b {
+  color: #2563eb;
+  font-weight: 700;
 }
 
 .date-label {
